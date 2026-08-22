@@ -53,6 +53,7 @@ void write_message(const unsigned int mtype, const int level, const char* fmt, .
 			struct timespec tp;
 			clock_gettime(CLOCK_MONOTONIC_COARSE, &tp);
 			fprintf(stderr, "[%ld.%03ld]%s", (long)tp.tv_sec, (long)tp.tv_nsec / 1000000L, msg);
+			fflush(stderr);
 		}
 	}
 

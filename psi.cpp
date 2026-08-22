@@ -504,32 +504,28 @@ void satipPSI::recompute()
 	for (std::set<int>::iterator it = m_pat_pmt_pids.begin(); it != m_pat_pmt_pids.end(); ++it)
 	{
 		int pmt_pid = *it;
-		bool is_active = false;
+		watched.insert(pmt_pid);
+		derived.insert(pmt_pid);
 
 		std::map<int, pmt_info>::iterator pmt = m_pmt.find(pmt_pid);
-		if (pmt != m_pmt.end())
+		if (pmt == m_pmt.end())
+			continue;
+
+		bool is_active = false;
+		for (std::set<int>::iterator es = pmt->second.es_pids.begin(); es != pmt->second.es_pids.end(); ++es)
 		{
-			for (std::set<int>::iterator es = pmt->second.es_pids.begin(); es != pmt->second.es_pids.end(); ++es)
+			if (m_joined_pids.find(*es) != m_joined_pids.end())
 			{
-				if (m_joined_pids.find(*es) != m_joined_pids.end())
-				{
-					is_active = true;
-					break;
-				}
+				is_active = true;
+				break;
 			}
 		}
 
-		/* watch every known pmt, its sections are what tells us the es pids */
-		watched.insert(pmt_pid);
-
-		if (!is_active)
-			continue;
-
-		active.insert(pmt_pid);
-		derived.insert(pmt_pid);
-
-		if (pmt != m_pmt.end())
+		if (is_active)
+		{
+			active.insert(pmt_pid);
 			derived.insert(pmt->second.ecm_pids.begin(), pmt->second.ecm_pids.end());
+		}
 	}
 
 	if ((int)derived.size() > PSI_MAX_DERIVED_PIDS)
