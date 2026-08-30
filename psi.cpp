@@ -500,11 +500,6 @@ void satipPSI::recompute()
 	 * The pmt pid alone does not qualify: a service scan opens a section filter
 	 * on every pmt of the transponder, which would otherwise pull in the ecm
 	 * pids of every service at once.
-	 *
-	 * Hypothesis: do not drop PMT/ECM if ES pids are still in last derived set
-	 * (linger) and also consider PMT pid itself as active for initial tune.
-	 * Keeps PMT 225 + ECM 2250 while ES (e.g. 20,224) are still derived,
-	 * avoiding PLAY delpids=225,2250 gap.
 	 */
 	for (std::set<int>::iterator it = m_pat_pmt_pids.begin(); it != m_pat_pmt_pids.end(); ++it)
 	{
@@ -519,21 +514,6 @@ void satipPSI::recompute()
 				if (m_joined_pids.find(*es) != m_joined_pids.end())
 				{
 					is_active = true;
-					break;
-				}
-			}
-		}
-
-		// Also treat PMT pid itself in joined list as active (force PMT/ECM if PMT joined)
-		if (!is_active && m_joined_pids.find(pmt_pid) != m_joined_pids.end())
-			is_active = true;
-
-		// Linger: if PMT was previously derived and any ES is still in last derived set, keep it
-		if (!is_active && m_derived_pids.find(pmt_pid) != m_derived_pids.end() && pmt != m_pmt.end()) {
-			for (std::set<int>::iterator es = pmt->second.es_pids.begin(); es != pmt->second.es_pids.end(); ++es) {
-				if (m_derived_pids.find(*es) != m_derived_pids.end()) {
-					is_active = true;
-					DEBUG(MSG_CA, "[ca%d] linger PMT %d, ES %d still in derived\n", m_tuner_id, pmt_pid, *es);
 					break;
 				}
 			}
