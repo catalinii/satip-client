@@ -114,14 +114,19 @@ int main(int argc, char** argv)
 				break;
 
 			case 'f':
-				log_file = fopen(optarg, "a");
-				if (!log_file)
+			{
+				FILE *f = fopen(optarg, "a");
+				if (!f)
 				{
 					fprintf(stderr, "Cannot open log file '%s': %s\n", optarg, strerror(errno));
 					exit(1);
 				}
-				setvbuf(log_file, NULL, _IOLBF, 0);
+				setvbuf(f, NULL, _IOLBF, 0);
+				if (log_file)
+					fclose(log_file);
+				log_file = f;
 				break;
+			}
 
 			case 'h':
 			default:
