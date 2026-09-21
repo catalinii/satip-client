@@ -26,6 +26,8 @@
 
 __thread char msg[MAX_MSGSIZE];
 
+FILE *log_file = NULL;
+
 void write_message(const unsigned int mtype, const int level, const char* fmt, ... ) {
 	if( !(mtype & dbg_mask ) )
 		return;
@@ -40,7 +42,12 @@ void write_message(const unsigned int mtype, const int level, const char* fmt, .
 		strncat(msg, tn, sizeof(msg)-1);
 		msg[sizeof(tn)-1] = '\0';
 
-		if(use_syslog) {
+		if(log_file) {
+			struct timespec tp;
+			clock_gettime(CLOCK_MONOTONIC_COARSE, &tp);
+			fprintf(log_file, "[%ld.%03ld]%s", (long)tp.tv_sec, (long)tp.tv_nsec / 1000000L, msg);
+			fflush(log_file);
+		} else if(use_syslog) {
 			int priority;
 			switch(level) {
 				case 1: priority=LOG_ERR; break;

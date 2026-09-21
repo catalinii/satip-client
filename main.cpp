@@ -18,6 +18,9 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 #include <unistd.h>
 #include <signal.h>
 
@@ -65,6 +68,7 @@ void print_usage(void)
            "                               3: Info\n"
            "                               4: Debug\n"
            "       -y                   Use syslog instead of STDERR for logging\n"
+           "       -f <log_file>        Append log messages to file instead of STDERR\n"
            "       -h                   Print help\n"
                                              );
 }
@@ -93,7 +97,7 @@ int main(int argc, char** argv)
 {
 	int opt;
 
-	while( (opt = getopt(argc, argv, "m:l:yh") ) != -1 )
+	while( (opt = getopt(argc, argv, "m:l:yf:h") ) != -1 )
 	{
 		switch(opt)
 		{
@@ -107,6 +111,16 @@ int main(int argc, char** argv)
 
 			case 'y':
 				use_syslog = 1;
+				break;
+
+			case 'f':
+				log_file = fopen(optarg, "a");
+				if (!log_file)
+				{
+					fprintf(stderr, "Cannot open log file '%s': %s\n", optarg, strerror(errno));
+					exit(1);
+				}
+				setvbuf(log_file, NULL, _IOLBF, 0);
 				break;
 
 			case 'h':
@@ -130,6 +144,10 @@ int main(int argc, char** argv)
 		pause();
 
 	DEBUG(MSG_MAIN,"End MAIN\n");
+
+	/* Do not fclose(log_file) here: static destructors (e.g.
+	   ~sessionManager) still log after main() returns. The file
+	   stays open until process exit; every message is flushed. */
 
 	return 0;
 }
