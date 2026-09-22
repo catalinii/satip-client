@@ -28,6 +28,10 @@ __thread char msg[MAX_MSGSIZE];
 
 FILE *log_file = NULL;
 
+/* NOTE: not async-signal-safe (uses fprintf/fflush/syslog on shared
+ * streams). Never call write_message() — or the ERROR/WARN/INFO/DEBUG
+ * macros — from a signal handler; set a sig_atomic_t flag there and log
+ * after returning to normal execution. */
 void write_message(const unsigned int mtype, const int level, const char* fmt, ... ) {
 	if( !(mtype & dbg_mask ) )
 		return;
